@@ -1,0 +1,365 @@
+# 代码评审管理系统 - Git忽略文件配置
+
+# ================================
+# Java / Spring Boot 后端相关
+# ================================
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# Gradle
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+gradle/
+gradlew
+gradlew.bat
+
+# Java编译文件
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Spring Boot
+spring-boot-*.jar
+application-*.yml
+application-*.yaml
+application-*.properties
+!application.yml.example
+!application.properties.example
+
+# 日志文件
+logs/
+*.log
+*.log.*
+log/
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
+
+# ================================
+# Vue / Node.js 前端相关
+# ================================
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 构建输出
+dist/
+dist-ssr/
+build/
+
+# 本地环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vue相关
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Nuxt.js
+.nuxt
+.output
+
+# Vite
+.vite/
+
+# ================================
+# 数据库相关
+# ================================
+
+# MySQL
+*.sql.backup
+*.sql.bak
+dump.sql
+*.dump
+
+# H2 Database (开发测试用)
+*.db
+*.trace.db
+*.lock.db
+
+# SQLite
+*.sqlite
+*.sqlite3
+*.db3
+
+# ================================
+# IDE 和编辑器
+# ================================
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.metadata
+.loadpath
+.recommenders
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ================================
+# 操作系统相关
+# ================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ================================
+# 项目特定文件
+# ================================
+
+# 上传文件目录
+uploads/
+upload/
+files/
+attachments/
+code-screenshots/
+
+# 临时文件
+temp/
+tmp/
+*.tmp
+*.temp
+
+# 配置文件 (包含敏感信息)
+config/database.yml
+config/secrets.yml
+config/application-prod.yml
+config/application-production.yml
+
+# SSL证书
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# 备份文件
+*.backup
+*.bak
+*.old
+*.orig
+
+# 缓存文件
+.cache/
+cache/
+*.cache
+
+# 测试覆盖率报告
+coverage/
+*.lcov
+.nyc_output/
+
+# 文档生成
+docs/build/
+site/
+
+# ================================
+# 开发工具和依赖
+# ================================
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+.docker/
+
+# Kubernetes
+*.kubeconfig
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# ================================
+# AI和机器学习相关
+# ================================
+
+# 模型文件
+*.model
+*.pkl
+*.h5
+*.pb
+models/
+checkpoints/
+
+# 数据文件
+data/
+datasets/
+*.csv
+*.json.large
+*.xml.large
+
+# ================================
+# 监控和日志
+# ================================
+
+# 应用日志
+application.log
+error.log
+access.log
+debug.log
+
+# 性能分析
+*.hprof
+*.prof
+
+# 监控数据
+metrics/
+monitoring/
+
+# ================================
+# 其他
+# ================================
+
+# 压缩文件
+*.7z
+*.dmg
+*.gz
+*.iso
+*.rar
+*.tar
+*.zip
+
+# 编译和构建工具
+.sass-cache/
+.grunt/
+.bower_components/
+
+# 本地开发脚本
+run-local.sh
+start-dev.sh
+*.local.sh
+
+# 测试数据
+test-data/
+mock-data/
+fixtures/
+
+# API文档生成
+api-docs/
+swagger-ui/
+
+# 项目文档草稿
+*.draft.md
+*.todo.md
+notes.txt
+TODO.txt
+
+# 临时开发文件（以tmp_rovodev_开头的文件）
+tmp_rovodev_*
