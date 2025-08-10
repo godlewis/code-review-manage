@@ -273,11 +273,7 @@ public class NotificationTemplateManagementService {
             NotificationTemplate.NotificationChannel.EMAIL,
             "评审任务分配邮件通知",
             "代码评审任务分配 - ${reviewTitle}",
-            "您好，${userName}！\\n\\n您被分配了一个新的代码评审任务：\\n\\n" +
-            "任务标题：${reviewTitle}\\n" +
-            "提交人：${submitter}\\n" +
-            "截止时间：${deadline}\\n\\n" +
-            "请登录系统查看详情并及时完成评审。"
+            "您好，${userName}！\\n\\n您被分配了一个新的代码评审任务：\\n\\n任务标题：${reviewTitle}\\n提交人：${submitter}\\n截止时间：${deadline}\\n\\n请登录系统查看详情并及时完成评审。"
         );
         
         // 问题分配通知模板

@@ -40,7 +40,7 @@ public class NotificationChannelService {
     /**
      * 发送通知
      */
-    public void sendNotification(Notification notification, String channelName) {
+    public void sendNotification(Notification notification, String channelName) throws Exception {
         if (channels.isEmpty()) {
             initChannels();
         }

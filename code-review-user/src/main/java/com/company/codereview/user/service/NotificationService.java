@@ -526,7 +526,7 @@ public class NotificationService {
         QueryWrapper<Notification> todayWrapper = new QueryWrapper<>();
         todayWrapper.eq("recipient_id", userId);
         todayWrapper.between("created_at", todayStart, todayEnd);
-        int todayCount = notificationRepository.selectCount(todayWrapper);
+        Long todayCount = notificationRepository.selectCount(todayWrapper);
         summary.put("todayCount", todayCount);
         
         // 获取本周通知数量
@@ -534,7 +534,7 @@ public class NotificationService {
         QueryWrapper<Notification> weekWrapper = new QueryWrapper<>();
         weekWrapper.eq("recipient_id", userId);
         weekWrapper.ge("created_at", weekStart);
-        int weekCount = notificationRepository.selectCount(weekWrapper);
+        Long weekCount = notificationRepository.selectCount(weekWrapper);
         summary.put("weekCount", weekCount);
         
         // 获取通知类型分布

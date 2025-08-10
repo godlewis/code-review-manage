@@ -42,12 +42,10 @@ public class EmailNotificationChannel implements NotificationChannel {
         }
         
         // 获取用户邮箱
-        Optional<User> userOpt = userRepository.selectById(notification.getRecipientId());
-        if (userOpt.isEmpty()) {
+        User user = userRepository.selectById(notification.getRecipientId());
+        if (user == null) {
             throw new Exception("用户不存在: " + notification.getRecipientId());
         }
-        
-        User user = userOpt.get();
         if (!StringUtils.hasText(user.getEmail())) {
             throw new Exception("用户邮箱为空: " + notification.getRecipientId());
         }

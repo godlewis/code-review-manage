@@ -6,6 +6,7 @@ import com.company.codereview.user.dto.FileUploadResult;
 import com.company.codereview.user.exception.FileUploadException;
 import io.minio.*;
 import io.minio.errors.*;
+import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

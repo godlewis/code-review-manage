@@ -54,12 +54,10 @@ public class WechatWorkNotificationChannel implements NotificationChannel {
         }
         
         // 获取用户信息
-        Optional<User> userOpt = userRepository.selectById(notification.getRecipientId());
-        if (userOpt.isEmpty()) {
+        User user = userRepository.selectById(notification.getRecipientId());
+        if (user == null) {
             throw new Exception("用户不存在: " + notification.getRecipientId());
         }
-        
-        User user = userOpt.get();
         String wechatUserId = getWechatUserId(user);
         if (!StringUtils.hasText(wechatUserId)) {
             throw new Exception("用户企业微信ID为空: " + notification.getRecipientId());

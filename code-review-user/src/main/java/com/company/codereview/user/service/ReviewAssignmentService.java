@@ -67,7 +67,16 @@ public class ReviewAssignmentService {
         MatchingMatrix matrix = calculateMatchingMatrix(activeMembers, weekStart);
         
         // 3. 使用匈牙利算法求解最优分配
-        List<HungarianAlgorithm.Assignment> optimalAssignments = hungarianAlgorithm.solve(matrix.getMatrix());
+        int[] assignmentArray = HungarianAlgorithm.solve(matrix.getMatrix());
+        List<HungarianAlgorithm.Assignment> optimalAssignments = new ArrayList<>();
+        
+        for (int i = 0; i < assignmentArray.length; i++) {
+            int j = assignmentArray[i];
+            if (j != -1) { // 有效的分配
+                double cost = matrix.getMatrix()[i][j];
+                optimalAssignments.add(new HungarianAlgorithm.Assignment(i, j, cost));
+            }
+        }
         
         // 4. 转换为ReviewAssignment实体并应用负载均衡调整
         List<ReviewAssignment> assignments = convertToReviewAssignments(
@@ -492,7 +501,13 @@ public class ReviewAssignmentService {
         MatchingMatrix matrix = calculateMatchingMatrix(activeMembers, weekStart);
         
         // 3. 使用匈牙利算法求解最优分配
-        List<HungarianAlgorithm.Assignment> optimalAssignments = hungarianAlgorithm.solve(matrix.getMatrix());
+        int[] assignmentArray = hungarianAlgorithm.solve(matrix.getMatrix());
+        List<HungarianAlgorithm.Assignment> optimalAssignments = new ArrayList<>();
+        for (int i = 0; i < assignmentArray.length; i++) {
+            if (assignmentArray[i] != -1) {
+                optimalAssignments.add(new HungarianAlgorithm.Assignment(i, assignmentArray[i], matrix.getMatrix()[i][assignmentArray[i]]));
+            }
+        }
         
         // 4. 转换为ReviewAssignment实体（但不保存）
         List<ReviewAssignment> assignments = convertToReviewAssignments(

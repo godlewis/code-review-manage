@@ -198,7 +198,7 @@ public class ReviewRecordService {
         }
         
         // 查询截图
-        List<CodeScreenshot> screenshots = screenshotRepository.findByReviewRecordId(id);
+        List<CodeScreenshot> screenshots = screenshotRepository.selectByReviewRecordId(id);
         reviewRecord.setScreenshots(screenshots);
         
         // 查询问题

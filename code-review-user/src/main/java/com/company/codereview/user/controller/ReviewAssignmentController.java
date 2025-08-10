@@ -17,6 +17,7 @@ import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 评审分配控制器
@@ -497,7 +498,7 @@ public class ReviewAssignmentController {
         dto.setReviewerId(assignment.getReviewerId());
         dto.setRevieweeId(assignment.getRevieweeId());
         dto.setWeekStartDate(assignment.getWeekStartDate());
-        dto.setStatus(assignment.getStatus().name());
+        dto.setStatus(assignment.getStatus());
         dto.setSkillMatchScore(assignment.getSkillMatchScore());
         dto.setLoadBalanceScore(assignment.getLoadBalanceScore());
         dto.setDiversityScore(assignment.getDiversityScore());

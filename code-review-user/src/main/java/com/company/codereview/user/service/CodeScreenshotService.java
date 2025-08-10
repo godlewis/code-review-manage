@@ -203,4 +203,28 @@ public class CodeScreenshotService {
         CodeScreenshot screenshot = screenshotRepository.selectById(screenshotId);
         return screenshot != null && reviewRecordId.equals(screenshot.getReviewRecordId());
     }
+    
+    /**
+     * 重新排序截图
+     */
+    @Transactional
+    public void reorderScreenshots(Long reviewRecordId, List<Long> screenshotIds) {
+        log.info("重新排序截图: reviewRecordId={}, count={}", reviewRecordId, screenshotIds.size());
+        
+        for (int i = 0; i < screenshotIds.size(); i++) {
+            CodeScreenshot screenshot = new CodeScreenshot();
+            screenshot.setId(screenshotIds.get(i));
+            screenshot.setSortOrder(i + 1);
+            screenshotRepository.updateById(screenshot);
+        }
+        
+        log.info("截图重新排序完成: reviewRecordId={}", reviewRecordId);
+    }
+    
+    /**
+     * 获取截图数量
+     */
+    public Long getScreenshotCount(Long reviewRecordId) {
+        return countScreenshotsByReviewRecordId(reviewRecordId);
+    }
 }

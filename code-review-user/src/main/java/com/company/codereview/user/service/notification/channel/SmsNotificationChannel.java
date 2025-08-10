@@ -47,12 +47,10 @@ public class SmsNotificationChannel implements NotificationChannel {
         }
         
         // 获取用户手机号
-        Optional<User> userOpt = userRepository.selectById(notification.getRecipientId());
-        if (userOpt.isEmpty()) {
+        User user = userRepository.selectById(notification.getRecipientId());
+        if (user == null) {
             throw new Exception("用户不存在: " + notification.getRecipientId());
         }
-        
-        User user = userOpt.get();
         if (!StringUtils.hasText(user.getPhone())) {
             throw new Exception("用户手机号为空: " + notification.getRecipientId());
         }

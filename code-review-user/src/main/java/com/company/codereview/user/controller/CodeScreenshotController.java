@@ -249,9 +249,9 @@ public class CodeScreenshotController {
     @GetMapping("/review-record/{reviewRecordId}/count")
     @ApiOperation("获取评审记录的截图数量")
     @PreAuthorize("hasRole('DEVELOPER') or hasRole('TEAM_LEADER') or hasRole('ARCHITECT')")
-    public ResponseResult<Integer> getScreenshotCount(@PathVariable Long reviewRecordId) {
+    public ResponseResult<Long> getScreenshotCount(@PathVariable Long reviewRecordId) {
         
-        int count = codeScreenshotService.getScreenshotCount(reviewRecordId);
+        Long count = codeScreenshotService.getScreenshotCount(reviewRecordId);
         
         return ResponseResult.success(count);
     }
