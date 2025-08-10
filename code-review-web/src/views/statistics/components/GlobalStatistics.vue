@@ -147,15 +147,15 @@
             >
               <div class="practice-header">
                 <div class="practice-team">{{ practice.teamName }}</div>
-                <div class="practice-category">{{ practice.category }}</div>
+                <div class="practice-category">{{ practice.practiceType || practice.category }}</div>
               </div>
               <div class="practice-content">
-                <div class="practice-desc">{{ practice.practiceDescription }}</div>
+                <div class="practice-desc">{{ practice.description || practice.practiceDescription }}</div>
                 <div class="practice-metric">
                   <span class="metric-label">{{ practice.keyMetric }}:</span>
-                  <span class="metric-value">{{ practice.metricValue }}</span>
+                  <span class="metric-value">{{ practice.metricValue || practice.keyMetricValue }}</span>
                 </div>
-                <div class="practice-reason">{{ practice.recommendationReason }}</div>
+                <div class="practice-reason">{{ practice.recommendationReason || '表现优异' }}</div>
               </div>
             </div>
           </div>
@@ -458,6 +458,14 @@ watch(() => props.data, () => {
 
 onMounted(() => {
   window.addEventListener('resize', resizeCharts)
+  // 监听容器大小变化
+  const resizeObserver = new ResizeObserver(() => {
+    setTimeout(resizeCharts, 100)
+  })
+  
+  if (usageChartRef.value) resizeObserver.observe(usageChartRef.value)
+  if (qualityChartRef.value) resizeObserver.observe(qualityChartRef.value)
+  if (crossTeamChartRef.value) resizeObserver.observe(crossTeamChartRef.value)
 })
 </script>
 
@@ -603,5 +611,66 @@ onMounted(() => {
 
 :deep(.el-card__body) {
   padding: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .global-statistics .el-row {
+    flex-direction: column;
+  }
+  
+  .global-statistics .el-col {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .overview-value {
+    font-size: 20px;
+  }
+  
+  .overview-item {
+    padding: 12px;
+  }
+  
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table .el-table__cell) {
+    padding: 6px 4px;
+  }
+  
+  .practice-item {
+    padding: 12px 0;
+  }
+  
+  .practice-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .health-item {
+    margin-bottom: 16px;
+  }
+  
+  :deep(.el-card__body) {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .overview-value {
+    font-size: 18px;
+  }
 }
 </style>

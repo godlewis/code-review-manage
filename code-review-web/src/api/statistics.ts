@@ -134,10 +134,10 @@ export interface QualityImprovementTrend {
 export interface BestPracticeTeam {
   teamId: number
   teamName: string
-  category: string
-  practiceDescription: string
+  practiceType: string
+  description: string
   keyMetric: string
-  metricValue: number
+  keyMetricValue: number
   recommendationReason: string
 }
 

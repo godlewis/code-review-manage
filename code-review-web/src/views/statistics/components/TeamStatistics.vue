@@ -385,6 +385,14 @@ watch(() => props.data, () => {
 
 onMounted(() => {
   window.addEventListener('resize', resizeCharts)
+  // 监听容器大小变化
+  const resizeObserver = new ResizeObserver(() => {
+    setTimeout(resizeCharts, 100)
+  })
+  
+  if (qualityChartRef.value) resizeObserver.observe(qualityChartRef.value)
+  if (issueTypeChartRef.value) resizeObserver.observe(issueTypeChartRef.value)
+  if (severityChartRef.value) resizeObserver.observe(severityChartRef.value)
 })
 </script>
 
@@ -544,5 +552,56 @@ onMounted(() => {
 
 :deep(.el-card__body) {
   padding: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .team-statistics .el-row {
+    flex-direction: column;
+  }
+  
+  .team-statistics .el-col {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .overview-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .overview-value {
+    font-size: 24px;
+  }
+  
+  .overview-item {
+    padding: 16px;
+  }
+  
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table .el-table__cell) {
+    padding: 8px 4px;
+  }
+  
+  .frequent-item {
+    padding: 8px 0;
+  }
+  
+  .frequent-rank {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+  
+  .comparison-item {
+    padding: 8px 0;
+  }
+  
+  :deep(.el-card__body) {
+    padding: 12px;
+  }
 }
 </style>

@@ -247,6 +247,12 @@ const exportReport = async () => {
     return
   }
 
+  const exportLoading = ElMessage({
+    message: '正在导出报表，请稍候...',
+    type: 'info',
+    duration: 0
+  })
+
   try {
     let response
     const [startDate, endDate] = dateRange.value
@@ -260,6 +266,8 @@ const exportReport = async () => {
             endDate,
             'excel'
           )
+        } else {
+          throw new Error('用户信息不完整')
         }
         break
       case 'team':
@@ -270,6 +278,8 @@ const exportReport = async () => {
             endDate,
             'excel'
           )
+        } else {
+          throw new Error('团队信息不完整')
         }
         break
       case 'global':
@@ -280,6 +290,8 @@ const exportReport = async () => {
         )
         break
     }
+
+    exportLoading.close()
 
     if (response?.data) {
       // 创建下载链接
@@ -296,9 +308,12 @@ const exportReport = async () => {
       window.URL.revokeObjectURL(url)
       
       ElMessage.success('报表导出成功')
+    } else {
+      throw new Error('导出数据为空')
     }
   } catch (error) {
-    ElMessage.error('导出报表失败')
+    exportLoading.close()
+    ElMessage.error(`导出报表失败: ${error.message || '未知错误'}`)
     console.error('导出报表失败:', error)
   }
 }
@@ -373,5 +388,38 @@ onMounted(async () => {
 
 :deep(.el-card__body) {
   padding: 16px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .statistics-page {
+    padding: 10px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .header-controls {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  
+  .header-controls .el-date-picker,
+  .header-controls .el-select,
+  .header-controls .el-button {
+    width: 100%;
+  }
+  
+  .overview-cards .el-col {
+    margin-bottom: 12px;
+  }
+  
+  .card-value {
+    font-size: 20px;
+  }
 }
 </style>

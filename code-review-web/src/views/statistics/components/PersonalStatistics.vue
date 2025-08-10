@@ -311,6 +311,14 @@ watch(() => props.data, () => {
 
 onMounted(() => {
   window.addEventListener('resize', resizeCharts)
+  // 监听容器大小变化
+  const resizeObserver = new ResizeObserver(() => {
+    setTimeout(resizeCharts, 100)
+  })
+  
+  if (growthChartRef.value) resizeObserver.observe(growthChartRef.value)
+  if (issueTypeChartRef.value) resizeObserver.observe(issueTypeChartRef.value)
+  if (severityChartRef.value) resizeObserver.observe(severityChartRef.value)
 })
 </script>
 
@@ -394,5 +402,38 @@ onMounted(() => {
 
 :deep(.el-card__body) {
   padding: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .personal-statistics .el-row {
+    flex-direction: column;
+  }
+  
+  .personal-statistics .el-col {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .metric-value {
+    font-size: 24px;
+  }
+  
+  .metric-item {
+    padding: 16px;
+  }
+  
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-card__body) {
+    padding: 12px;
+  }
 }
 </style>
