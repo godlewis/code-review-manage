@@ -34,6 +34,18 @@ public class User extends BaseEntity {
     private String email;
     
     /**
+     * 手机号
+     */
+    @TableField("phone")
+    private String phone;
+    
+    /**
+     * 用户级别
+     */
+    @TableField("level")
+    private String level;
+    
+    /**
      * 真实姓名
      */
     @TableField("real_name")

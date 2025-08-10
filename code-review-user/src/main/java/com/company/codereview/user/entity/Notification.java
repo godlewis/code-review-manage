@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
  * 通知实体
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @TableName("notifications")
 public class Notification extends BaseEntity {
@@ -111,7 +114,8 @@ public class Notification extends BaseEntity {
         FIX_VERIFIED("整改验证"),
         SUMMARY_GENERATED("汇总生成"),
         DEADLINE_REMINDER("截止提醒"),
-        SYSTEM_ANNOUNCEMENT("系统公告");
+        SYSTEM_ANNOUNCEMENT("系统公告"),
+        SYSTEM_NOTIFICATION("系统通知");
         
         private final String description;
         

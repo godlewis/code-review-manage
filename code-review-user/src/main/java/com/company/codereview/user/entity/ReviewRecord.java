@@ -82,6 +82,12 @@ public class ReviewRecord extends BaseEntity {
     private java.time.LocalDateTime completedAt;
     
     /**
+     * 备注
+     */
+    @TableField("remarks")
+    private String remarks;
+    
+    /**
      * 代码截图列表（不存储在数据库中，通过关联查询获取）
      */
     @TableField(exist = false)
