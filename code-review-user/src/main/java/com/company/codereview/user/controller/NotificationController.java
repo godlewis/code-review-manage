@@ -14,8 +14,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import com.company.codereview.user.entity.Notification;
 
 /**
  * 通知控制器
@@ -201,19 +202,7 @@ public class NotificationController {
         log.info("获取通知统计信息，时间范围：{} 到 {}", startDate, endDate);
         
         try {
-            // TODO: 实现通知统计逻辑
-            Map<String, Object> statistics = Map.of(
-                "totalSent", 1000,
-                "totalFailed", 50,
-                "successRate", 0.95,
-                "channelDistribution", Map.of(
-                    "IN_APP", 600,
-                    "EMAIL", 300,
-                    "WECHAT_WORK", 80,
-                    "SMS", 20
-                )
-            );
-            
+            Map<String, Object> statistics = notificationService.getNotificationStatistics(startDate, endDate);
             return ResponseResult.success(statistics);
         } catch (Exception e) {
             log.error("获取通知统计信息失败", e);
@@ -256,6 +245,201 @@ public class NotificationController {
         } catch (Exception e) {
             log.error("清理过期通知失败", e);
             return ResponseResult.error("清理过期通知失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取通知详情
+     */
+    @GetMapping("/{notificationId}")
+    @Operation(summary = "获取通知详情", description = "获取指定通知的详细信息")
+    @PreAuthorize("hasRole('DEVELOPER') or hasRole('TEAM_LEADER') or hasRole('ARCHITECT')")
+    public ResponseResult<NotificationDTO> getNotificationDetail(@PathVariable Long notificationId) {
+        Long currentUserId = getCurrentUserId();
+        log.info("用户 {} 获取通知详情: {}", currentUserId, notificationId);
+        
+        try {
+            NotificationDTO notification = notificationService.getNotificationDetail(notificationId, currentUserId);
+            return ResponseResult.success(notification);
+        } catch (IllegalArgumentException e) {
+            log.warn("获取通知详情失败: {}", e.getMessage());
+            return ResponseResult.error("通知不存在或无权限访问");
+        } catch (Exception e) {
+            log.error("获取通知详情异常", e);
+            return ResponseResult.error("获取通知详情失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 批量操作通知
+     */
+    @PostMapping("/batch-operation")
+    @Operation(summary = "批量操作通知", description = "批量标记已读、删除或其他操作")
+    @PreAuthorize("hasRole('DEVELOPER') or hasRole('TEAM_LEADER') or hasRole('ARCHITECT')")
+    public ResponseResult<Void> batchOperateNotifications(
+            @RequestBody Map<String, Object> request) {
+        
+        Long currentUserId = getCurrentUserId();
+        String operation = (String) request.get("operation");
+        @SuppressWarnings("unchecked")
+        List<Long> notificationIds = (List<Long>) request.get("notificationIds");
+        
+        log.info("用户 {} 批量操作通知: operation={}, ids={}", currentUserId, operation, notificationIds);
+        
+        try {
+            switch (operation) {
+                case "markRead":
+                    notificationService.markAsRead(currentUserId, notificationIds);
+                    break;
+                case "delete":
+                    notificationService.deleteNotifications(currentUserId, notificationIds);
+                    break;
+                default:
+                    return ResponseResult.error("不支持的操作类型: " + operation);
+            }
+            return ResponseResult.success();
+        } catch (Exception e) {
+            log.error("批量操作通知失败", e);
+            return ResponseResult.error("批量操作失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取通知类型列表
+     */
+    @GetMapping("/types")
+    @Operation(summary = "获取通知类型列表", description = "获取系统支持的所有通知类型")
+    @PreAuthorize("hasRole('DEVELOPER') or hasRole('TEAM_LEADER') or hasRole('ARCHITECT')")
+    public ResponseResult<List<Map<String, Object>>> getNotificationTypes() {
+        try {
+            List<Map<String, Object>> types = Arrays.stream(Notification.NotificationType.values())
+                    .map(type -> {
+                        Map<String, Object> typeInfo = new HashMap<>();
+                        typeInfo.put("code", type.name());
+                        typeInfo.put("name", type.getDescription());
+                        return typeInfo;
+                    })
+                    .collect(Collectors.toList());
+            
+            return ResponseResult.success(types);
+        } catch (Exception e) {
+            log.error("获取通知类型列表失败", e);
+            return ResponseResult.error("获取通知类型列表失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取通知渠道列表
+     */
+    @GetMapping("/channels")
+    @Operation(summary = "获取通知渠道列表", description = "获取系统支持的所有通知渠道")
+    @PreAuthorize("hasRole('DEVELOPER') or hasRole('TEAM_LEADER') or hasRole('ARCHITECT')")
+    public ResponseResult<List<Map<String, Object>>> getNotificationChannels() {
+        try {
+            List<Map<String, Object>> channels = Arrays.asList(
+                Map.of("code", "IN_APP", "name", "站内信", "description", "系统内部消息通知"),
+                Map.of("code", "EMAIL", "name", "邮件", "description", "电子邮件通知"),
+                Map.of("code", "WECHAT_WORK", "name", "企业微信", "description", "企业微信群通知"),
+                Map.of("code", "SMS", "name", "短信", "description", "手机短信通知")
+            );
+            
+            return ResponseResult.success(channels);
+        } catch (Exception e) {
+            log.error("获取通知渠道列表失败", e);
+            return ResponseResult.error("获取通知渠道列表失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 测试通知发送
+     */
+    @PostMapping("/test-send")
+    @Operation(summary = "测试通知发送", description = "发送测试通知，用于验证通知渠道配置")
+    @PreAuthorize("hasRole('ARCHITECT')")
+    public ResponseResult<Void> testNotificationSend(@RequestBody Map<String, Object> request) {
+        log.info("测试通知发送: {}", request);
+        
+        try {
+            Long recipientId = Long.valueOf(request.get("recipientId").toString());
+            String channel = (String) request.get("channel");
+            String message = (String) request.getOrDefault("message", "这是一条测试通知");
+            
+            NotificationRequest testRequest = new NotificationRequest();
+            testRequest.setRecipientIds(Arrays.asList(recipientId));
+            testRequest.setNotificationType(Notification.NotificationType.SYSTEM_NOTIFICATION);
+            testRequest.setTitle("测试通知");
+            testRequest.setContent(message);
+            testRequest.setChannels(Arrays.asList(channel));
+            testRequest.setImmediate(true);
+            
+            notificationService.sendNotification(testRequest);
+            return ResponseResult.success();
+        } catch (Exception e) {
+            log.error("测试通知发送失败", e);
+            return ResponseResult.error("测试通知发送失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取通知历史记录
+     */
+    @GetMapping("/history")
+    @Operation(summary = "获取通知历史记录", description = "获取系统通知发送历史记录")
+    @PreAuthorize("hasRole('TEAM_LEADER') or hasRole('ARCHITECT')")
+    public ResponseResult<IPage<NotificationDTO>> getNotificationHistory(
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "页大小") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "通知类型") @RequestParam(required = false) String notificationType,
+            @Parameter(description = "通知状态") @RequestParam(required = false) String status,
+            @Parameter(description = "开始日期") @RequestParam(required = false) String startDate,
+            @Parameter(description = "结束日期") @RequestParam(required = false) String endDate) {
+        
+        log.info("获取通知历史记录: page={}, size={}, type={}, status={}", page, size, notificationType, status);
+        
+        try {
+            IPage<NotificationDTO> history = notificationService.getNotificationHistory(
+                page, size, notificationType, status, startDate, endDate);
+            return ResponseResult.success(history);
+        } catch (Exception e) {
+            log.error("获取通知历史记录失败", e);
+            return ResponseResult.error("获取通知历史记录失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取用户通知摘要
+     */
+    @GetMapping("/summary/{userId}")
+    @Operation(summary = "获取用户通知摘要", description = "获取用户的通知统计摘要信息")
+    @PreAuthorize("hasRole('TEAM_LEADER') or hasRole('ARCHITECT')")
+    public ResponseResult<Map<String, Object>> getUserNotificationSummary(@PathVariable Long userId) {
+        log.info("获取用户 {} 的通知摘要", userId);
+        
+        try {
+            Map<String, Object> summary = notificationService.getUserNotificationSummary(userId);
+            return ResponseResult.success(summary);
+        } catch (Exception e) {
+            log.error("获取用户通知摘要失败", e);
+            return ResponseResult.error("获取用户通知摘要失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取当前用户通知摘要
+     */
+    @GetMapping("/current/summary")
+    @Operation(summary = "获取当前用户通知摘要", description = "获取当前登录用户的通知统计摘要信息")
+    @PreAuthorize("hasRole('DEVELOPER') or hasRole('TEAM_LEADER') or hasRole('ARCHITECT')")
+    public ResponseResult<Map<String, Object>> getCurrentUserNotificationSummary() {
+        Long currentUserId = getCurrentUserId();
+        log.info("获取当前用户 {} 的通知摘要", currentUserId);
+        
+        try {
+            Map<String, Object> summary = notificationService.getUserNotificationSummary(currentUserId);
+            return ResponseResult.success(summary);
+        } catch (Exception e) {
+            log.error("获取当前用户通知摘要失败", e);
+            return ResponseResult.error("获取用户通知摘要失败：" + e.getMessage());
         }
     }
     

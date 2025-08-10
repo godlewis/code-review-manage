@@ -31,6 +31,10 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
+          <!-- 通知铃铛 -->
+          <NotificationBell />
+          
+          <!-- 用户下拉菜单 -->
           <el-dropdown @command="handleCommand">
             <span class="user-info">
               <el-icon><User /></el-icon>
@@ -55,10 +59,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import NotificationBell from '@/components/NotificationBell.vue'
+import { globalNotificationManager } from '@/composables/useNotification'
 
 const route = useRoute()
 const router = useRouter()
@@ -97,6 +103,21 @@ const handleCommand = async (command: string) => {
       break
   }
 }
+
+// 生命周期
+onMounted(async () => {
+  // 初始化全局通知管理器
+  try {
+    await globalNotificationManager.initialize()
+  } catch (error) {
+    console.error('初始化通知功能失败:', error)
+  }
+})
+
+onUnmounted(() => {
+  // 清理通知功能
+  globalNotificationManager.cleanup()
+})
 </script>
 
 <style scoped>
@@ -144,6 +165,7 @@ const handleCommand = async (command: string) => {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 16px;
 }
 
 .user-info {

@@ -189,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Refresh,
@@ -206,14 +206,24 @@ import {
 import { notificationApi, type Notification } from '@/api/notification'
 import NotificationPreferences from './components/NotificationPreferences.vue'
 import { useRouter } from 'vue-router'
+import { useNotification } from '@/composables/useNotification'
 
 const router = useRouter()
+
+// 使用实时通知功能
+const { 
+  notificationState, 
+  loading: notificationLoading, 
+  loadNotifications: loadNotificationData,
+  markAsRead: markNotificationAsRead,
+  markAllAsRead: markAllNotificationAsRead,
+  deleteNotifications: deleteNotificationData
+} = useNotification()
 
 // 响应式数据
 const loading = ref(false)
 const notifications = ref<Notification[]>([])
 const total = ref(0)
-const unreadCount = ref(0)
 const showPreferences = ref(false)
 const selectedNotifications = ref<number[]>([])
 
@@ -228,6 +238,9 @@ const filters = reactive({
   dateRange: null as [string, string] | null,
   keyword: ''
 })
+
+// 计算属性 - 使用实时通知状态
+const unreadCount = computed(() => notificationState.unreadCount)
 
 // 通知类型选项
 const notificationTypes = ref([
@@ -287,12 +300,8 @@ const loadNotifications = async () => {
 }
 
 const loadUnreadCount = async () => {
-  try {
-    const { data } = await notificationApi.getCurrentUserUnreadCount()
-    unreadCount.value = data
-  } catch (error) {
-    console.error('加载未读通知数量失败:', error)
-  }
+  // 未读数量现在由实时通知状态管理，无需单独加载
+  // 但为了兼容性，保留这个方法
 }
 
 const filterNotifications = (list: Notification[]) => {
@@ -375,10 +384,9 @@ const handleNotificationClick = async (notification: Notification) => {
   // 如果未读，标记为已读
   if (!notification.isRead) {
     try {
-      await notificationApi.markAsRead([notification.id])
+      await markNotificationAsRead([notification.id])
       notification.isRead = true
       notification.readAt = new Date().toISOString()
-      unreadCount.value = Math.max(0, unreadCount.value - 1)
     } catch (error) {
       console.error('标记通知为已读失败:', error)
     }
@@ -449,14 +457,13 @@ const handleNotificationAction = async (command: { action: string; id: number })
 
 const markAllAsRead = async () => {
   try {
-    await notificationApi.markAllAsRead()
+    await markAllNotificationAsRead()
     notifications.value.forEach(notification => {
       if (!notification.isRead) {
         notification.isRead = true
         notification.readAt = new Date().toISOString()
       }
     })
-    unreadCount.value = 0
     ElMessage.success('所有通知已标记为已读')
   } catch (error) {
     ElMessage.error('标记所有通知为已读失败')
@@ -466,12 +473,11 @@ const markAllAsRead = async () => {
 
 const batchMarkAsRead = async () => {
   try {
-    await notificationApi.markAsRead(selectedNotifications.value)
+    await markNotificationAsRead(selectedNotifications.value)
     notifications.value.forEach(notification => {
       if (selectedNotifications.value.includes(notification.id) && !notification.isRead) {
         notification.isRead = true
         notification.readAt = new Date().toISOString()
-        unreadCount.value = Math.max(0, unreadCount.value - 1)
       }
     })
     selectedNotifications.value = []
@@ -490,7 +496,7 @@ const batchDelete = async () => {
       { type: 'warning' }
     )
     
-    await notificationApi.deleteNotifications(selectedNotifications.value)
+    await deleteNotificationData(selectedNotifications.value)
     notifications.value = notifications.value.filter(n => !selectedNotifications.value.includes(n.id))
     total.value -= selectedNotifications.value.length
     selectedNotifications.value = []

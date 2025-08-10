@@ -322,6 +322,246 @@ public class NotificationService {
         log.info("重新加入队列的失败通知数量: {}", failedNotifications.size());
     }
     
+    /**
+     * 获取通知统计信息
+     */
+    public Map<String, Object> getNotificationStatistics(String startDate, String endDate) {
+        log.info("获取通知统计信息，时间范围：{} 到 {}", startDate, endDate);
+        
+        try {
+            LocalDateTime startDateTime = LocalDateTime.parse(startDate + "T00:00:00");
+            LocalDateTime endDateTime = LocalDateTime.parse(endDate + "T23:59:59");
+            
+            // 获取基础统计数据
+            List<Map<String, Object>> rawStatistics = notificationRepository
+                    .getNotificationStatistics(startDateTime, endDateTime);
+            
+            // 处理统计数据
+            Map<String, Object> result = new HashMap<>();
+            
+            // 总体统计
+            int totalSent = 0;
+            int totalFailed = 0;
+            int totalPending = 0;
+            Map<String, Integer> channelDistribution = new HashMap<>();
+            Map<String, Integer> typeDistribution = new HashMap<>();
+            Map<String, Integer> statusDistribution = new HashMap<>();
+            
+            for (Map<String, Object> stat : rawStatistics) {
+                String status = (String) stat.get("status");
+                String channels = (String) stat.get("channels");
+                String type = (String) stat.get("notification_type");
+                Integer count = ((Number) stat.get("count")).intValue();
+                
+                // 状态统计
+                statusDistribution.merge(status, count, Integer::sum);
+                
+                if ("SENT".equals(status)) {
+                    totalSent += count;
+                } else if ("FAILED".equals(status)) {
+                    totalFailed += count;
+                } else if ("PENDING".equals(status)) {
+                    totalPending += count;
+                }
+                
+                // 渠道统计
+                if (StringUtils.hasText(channels)) {
+                    String[] channelArray = channels.split(",");
+                    for (String channel : channelArray) {
+                        channelDistribution.merge(channel.trim(), count, Integer::sum);
+                    }
+                }
+                
+                // 类型统计
+                if (StringUtils.hasText(type)) {
+                    typeDistribution.merge(type, count, Integer::sum);
+                }
+            }
+            
+            // 计算成功率
+            int totalProcessed = totalSent + totalFailed;
+            double successRate = totalProcessed > 0 ? (double) totalSent / totalProcessed : 0.0;
+            
+            // 组装结果
+            result.put("totalSent", totalSent);
+            result.put("totalFailed", totalFailed);
+            result.put("totalPending", totalPending);
+            result.put("totalProcessed", totalProcessed);
+            result.put("successRate", Math.round(successRate * 10000.0) / 100.0); // 保留两位小数
+            result.put("channelDistribution", channelDistribution);
+            result.put("typeDistribution", typeDistribution);
+            result.put("statusDistribution", statusDistribution);
+            
+            // 获取每日统计趋势
+            result.put("dailyTrend", getDailyNotificationTrend(startDateTime, endDateTime));
+            
+            return result;
+            
+        } catch (Exception e) {
+            log.error("获取通知统计信息失败", e);
+            throw new RuntimeException("获取通知统计信息失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取通知详情
+     */
+    public NotificationDTO getNotificationDetail(Long notificationId, Long userId) {
+        log.info("获取通知详情: notificationId={}, userId={}", notificationId, userId);
+        
+        QueryWrapper<Notification> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("id", notificationId);
+        queryWrapper.eq("recipient_id", userId); // 确保用户只能查看自己的通知
+        
+        Notification notification = notificationRepository.selectOne(queryWrapper);
+        if (notification == null) {
+            throw new IllegalArgumentException("通知不存在或无权限访问");
+        }
+        
+        return convertToDTO(notification);
+    }
+    
+    /**
+     * 获取每日通知趋势
+     */
+    private List<Map<String, Object>> getDailyNotificationTrend(LocalDateTime startDate, LocalDateTime endDate) {
+        List<Map<String, Object>> dailyTrend = new ArrayList<>();
+        
+        LocalDateTime current = startDate.toLocalDate().atStartOfDay();
+        while (!current.isAfter(endDate)) {
+            LocalDateTime dayStart = current;
+            LocalDateTime dayEnd = current.plusDays(1).minusSeconds(1);
+            
+            List<Map<String, Object>> dayStats = notificationRepository
+                    .getNotificationStatistics(dayStart, dayEnd);
+            
+            int daySent = 0;
+            int dayFailed = 0;
+            int dayPending = 0;
+            
+            for (Map<String, Object> stat : dayStats) {
+                String status = (String) stat.get("status");
+                Integer count = ((Number) stat.get("count")).intValue();
+                
+                if ("SENT".equals(status)) {
+                    daySent += count;
+                } else if ("FAILED".equals(status)) {
+                    dayFailed += count;
+                } else if ("PENDING".equals(status)) {
+                    dayPending += count;
+                }
+            }
+            
+            Map<String, Object> dayData = new HashMap<>();
+            dayData.put("date", current.toLocalDate().toString());
+            dayData.put("sent", daySent);
+            dayData.put("failed", dayFailed);
+            dayData.put("pending", dayPending);
+            dayData.put("total", daySent + dayFailed + dayPending);
+            
+            dailyTrend.add(dayData);
+            current = current.plusDays(1);
+        }
+        
+        return dailyTrend;
+    }
+    
+    /**
+     * 获取通知历史记录
+     */
+    public IPage<NotificationDTO> getNotificationHistory(int page, int size, String notificationType, 
+                                                        String status, String startDate, String endDate) {
+        log.info("获取通知历史记录: page={}, size={}, type={}, status={}", page, size, notificationType, status);
+        
+        Page<Notification> pageRequest = new Page<>(page, size);
+        QueryWrapper<Notification> queryWrapper = new QueryWrapper<>();
+        
+        // 添加查询条件
+        if (StringUtils.hasText(notificationType)) {
+            queryWrapper.eq("notification_type", notificationType);
+        }
+        
+        if (StringUtils.hasText(status)) {
+            queryWrapper.eq("status", status);
+        }
+        
+        if (StringUtils.hasText(startDate)) {
+            queryWrapper.ge("created_at", startDate + " 00:00:00");
+        }
+        
+        if (StringUtils.hasText(endDate)) {
+            queryWrapper.le("created_at", endDate + " 23:59:59");
+        }
+        
+        queryWrapper.orderByDesc("created_at");
+        
+        IPage<Notification> notificationPage = notificationRepository.selectPage(pageRequest, queryWrapper);
+        
+        // 转换为DTO
+        IPage<NotificationDTO> dtoPage = new Page<>(page, size, notificationPage.getTotal());
+        List<NotificationDTO> dtoList = notificationPage.getRecords().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        dtoPage.setRecords(dtoList);
+        
+        return dtoPage;
+    }
+    
+    /**
+     * 获取用户通知摘要
+     */
+    public Map<String, Object> getUserNotificationSummary(Long userId) {
+        log.info("获取用户 {} 的通知摘要", userId);
+        
+        Map<String, Object> summary = new HashMap<>();
+        
+        // 获取未读通知数量
+        int unreadCount = getUnreadCount(userId);
+        summary.put("unreadCount", unreadCount);
+        
+        // 获取今日通知数量
+        LocalDateTime todayStart = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime todayEnd = todayStart.plusDays(1).minusSeconds(1);
+        
+        QueryWrapper<Notification> todayWrapper = new QueryWrapper<>();
+        todayWrapper.eq("recipient_id", userId);
+        todayWrapper.between("created_at", todayStart, todayEnd);
+        int todayCount = notificationRepository.selectCount(todayWrapper);
+        summary.put("todayCount", todayCount);
+        
+        // 获取本周通知数量
+        LocalDateTime weekStart = LocalDateTime.now().minusDays(7);
+        QueryWrapper<Notification> weekWrapper = new QueryWrapper<>();
+        weekWrapper.eq("recipient_id", userId);
+        weekWrapper.ge("created_at", weekStart);
+        int weekCount = notificationRepository.selectCount(weekWrapper);
+        summary.put("weekCount", weekCount);
+        
+        // 获取通知类型分布
+        QueryWrapper<Notification> typeWrapper = new QueryWrapper<>();
+        typeWrapper.eq("recipient_id", userId);
+        typeWrapper.ge("created_at", LocalDateTime.now().minusDays(30)); // 最近30天
+        typeWrapper.select("notification_type", "COUNT(*) as count");
+        typeWrapper.groupBy("notification_type");
+        
+        List<Map<String, Object>> typeDistribution = notificationRepository.selectMaps(typeWrapper);
+        summary.put("typeDistribution", typeDistribution);
+        
+        // 获取最近的通知
+        QueryWrapper<Notification> recentWrapper = new QueryWrapper<>();
+        recentWrapper.eq("recipient_id", userId);
+        recentWrapper.orderByDesc("created_at");
+        recentWrapper.last("LIMIT 5");
+        
+        List<Notification> recentNotifications = notificationRepository.selectList(recentWrapper);
+        List<NotificationDTO> recentDTOs = recentNotifications.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        summary.put("recentNotifications", recentDTOs);
+        
+        return summary;
+    }
+    
     // 私有辅助方法
     
     private boolean shouldSendNotification(Long userId, Notification.NotificationType notificationType) {
