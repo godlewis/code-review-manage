@@ -1,5 +1,13 @@
 import request from '@/utils/request'
 
+// 导出单独的函数以保持向后兼容性
+export const getTeams = () => {
+  return request({
+    url: '/api/teams',
+    method: 'get'
+  })
+}
+
 export const teamApi = {
   // 获取所有团队
   getTeams() {

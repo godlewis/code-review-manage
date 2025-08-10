@@ -201,6 +201,19 @@ const handleMarkAllAsRead = async () => {
   }
 }
 
+// 添加键盘快捷键支持
+const handleKeydown = (event: KeyboardEvent) => {
+  // Ctrl/Cmd + Shift + N 打开通知中心
+  if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'N') {
+    event.preventDefault()
+    goToNotificationCenter()
+  }
+  // Escape 关闭弹窗
+  if (event.key === 'Escape' && showPopover.value) {
+    showPopover.value = false
+  }
+}
+
 // 辅助方法
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -299,10 +312,12 @@ watch(isConnected, (connected) => {
 // 生命周期
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleKeydown)
 })
 </script>
 

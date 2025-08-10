@@ -68,22 +68,33 @@
 
     <!-- 通知列表 -->
     <div class="notification-list">
-      <el-card v-loading="loading">
+      <el-card v-loading="loading" element-loading-text="加载通知中...">
         <div class="list-header">
           <el-checkbox
             v-model="selectAll"
             :indeterminate="isIndeterminate"
             @change="handleSelectAll"
+            :disabled="notifications.length === 0"
           >
-            全选
+            全选 {{ notifications.length > 0 ? `(${notifications.length})` : '' }}
           </el-checkbox>
           <div class="batch-actions" v-if="selectedNotifications.length > 0">
-            <el-button size="small" @click="batchMarkAsRead">
+            <el-button size="small" @click="batchMarkAsRead" :loading="loading">
+              <el-icon><Check /></el-icon>
               标记已读 ({{ selectedNotifications.length }})
             </el-button>
-            <el-button size="small" type="danger" @click="batchDelete">
+            <el-button size="small" type="danger" @click="batchDelete" :loading="loading">
+              <el-icon><Delete /></el-icon>
               删除 ({{ selectedNotifications.length }})
             </el-button>
+          </div>
+          <div class="list-stats" v-if="notifications.length > 0">
+            <el-tag size="small" type="info">
+              共 {{ total }} 条通知
+            </el-tag>
+            <el-tag size="small" type="warning" v-if="unreadCount > 0">
+              {{ unreadCount }} 条未读
+            </el-tag>
           </div>
         </div>
 
@@ -189,7 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Refresh,
@@ -201,7 +212,10 @@ import {
   CircleCheck,
   Document,
   User,
-  Message
+  Message,
+  Filter,
+  Delete,
+  Check
 } from '@element-plus/icons-vue'
 import { notificationApi, type Notification } from '@/api/notification'
 import NotificationPreferences from './components/NotificationPreferences.vue'
@@ -607,10 +621,39 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
   }) as T
 }
 
+// 监听实时通知状态变化
+watch(() => notificationState.notifications, (newNotifications) => {
+  // 当有新的实时通知时，如果当前在第一页且没有筛选条件，则更新列表
+  if (pagination.page === 1 && !hasActiveFilters()) {
+    notifications.value = newNotifications.slice(0, pagination.size)
+    total.value = Math.max(total.value, newNotifications.length)
+  }
+}, { deep: true })
+
+// 检查是否有活跃的筛选条件
+const hasActiveFilters = () => {
+  return filters.type || filters.status || filters.keyword || filters.dateRange
+}
+
 // 生命周期
 onMounted(() => {
   refreshNotifications()
+  
+  // 监听页面可见性变化，当页面重新可见时刷新通知
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 })
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+})
+
+// 处理页面可见性变化
+const handleVisibilityChange = () => {
+  if (!document.hidden) {
+    // 页面重新可见时，刷新通知列表
+    refreshNotifications()
+  }
+}
 
 // 监听筛选条件变化
 watch(() => filters.status, () => {
@@ -667,6 +710,12 @@ watch(() => filters.status, () => {
 
 .batch-actions {
   display: flex;
+  gap: 8px;
+}
+
+.list-stats {
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
@@ -781,5 +830,170 @@ watch(() => filters.status, () => {
 
 :deep(.el-badge__content) {
   border: 1px solid #fff;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .notification-center {
+    padding: 12px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-header h2 {
+    font-size: 20px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filter-bar {
+    padding: 12px;
+  }
+
+  .filter-bar .el-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filter-bar .el-col {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .batch-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .notification-item {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 0;
+  }
+
+  .notification-item.unread {
+    border-left: none;
+    border-top: 3px solid #409EFF;
+  }
+
+  .item-checkbox {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    margin: 0;
+  }
+
+  .notification-item {
+    position: relative;
+    padding-right: 40px;
+  }
+
+  .item-content {
+    width: 100%;
+  }
+
+  .item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .item-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .item-actions {
+    position: absolute;
+    top: 40px;
+    right: 12px;
+    margin: 0;
+  }
+
+  .pagination-wrapper {
+    padding: 16px 0;
+  }
+
+  :deep(.el-pagination) {
+    justify-content: center;
+  }
+
+  :deep(.el-pagination .el-pager) {
+    flex-wrap: wrap;
+  }
+
+  :deep(.el-card__body) {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-center {
+    padding: 8px;
+  }
+
+  .page-header h2 {
+    font-size: 18px;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .header-actions .el-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .filter-bar {
+    padding: 8px;
+  }
+
+  .notification-item {
+    padding: 8px 0;
+    padding-right: 32px;
+  }
+
+  .item-title {
+    font-size: 14px;
+  }
+
+  .item-description {
+    font-size: 13px;
+  }
+
+  .item-time {
+    font-size: 11px;
+  }
+
+  .item-actions {
+    top: 8px;
+    right: 8px;
+  }
+
+  .item-checkbox {
+    top: 8px;
+    right: 8px;
+    transform: scale(0.8);
+  }
+
+  :deep(.el-card__body) {
+    padding: 8px;
+  }
 }
 </style>

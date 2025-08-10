@@ -52,6 +52,12 @@ const router = createRouter({
           name: 'Summaries',
           component: () => import('@/views/summaries/index.vue'),
           meta: { title: '智能汇总', icon: 'Document', roles: ['TEAM_LEADER', 'ARCHITECT'] }
+        },
+        {
+          path: '/notifications',
+          name: 'Notifications',
+          component: () => import('@/views/notifications/index.vue'),
+          meta: { title: '通知中心', icon: 'Bell' }
         }
       ]
     }

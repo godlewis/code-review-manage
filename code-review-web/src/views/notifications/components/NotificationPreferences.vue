@@ -325,8 +325,24 @@ const getNotificationTypeDesc = (type: string): string => {
 watch(() => props.visible, (visible) => {
   if (visible) {
     loadPreferences()
+    // 请求通知权限
+    requestNotificationPermission()
   }
 })
+
+// 请求浏览器通知权限
+const requestNotificationPermission = async () => {
+  if ('Notification' in window && Notification.permission === 'default') {
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission === 'granted') {
+        ElMessage.success('已开启浏览器通知权限')
+      }
+    } catch (error) {
+      console.log('请求通知权限失败:', error)
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -433,5 +449,115 @@ watch(() => props.visible, (visible) => {
 
 :deep(.el-input-number) {
   width: 120px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  :deep(.el-dialog) {
+    width: 95% !important;
+    margin: 0 auto;
+  }
+
+  .preference-item {
+    padding: 12px;
+  }
+
+  .preference-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .preference-header h4 {
+    font-size: 14px;
+  }
+
+  .channel-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .channel-options {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .frequency-setting {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .quiet-settings,
+  .advanced-settings {
+    padding: 12px;
+  }
+
+  :deep(.el-form-item__label) {
+    width: 100px !important;
+    font-size: 14px;
+  }
+
+  :deep(.el-tabs__nav-wrap) {
+    padding: 0 8px;
+  }
+
+  :deep(.el-tabs__item) {
+    padding: 0 12px;
+    font-size: 14px;
+  }
+
+  .dialog-footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .dialog-footer .el-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  :deep(.el-dialog) {
+    width: 98% !important;
+  }
+
+  .preference-item {
+    padding: 8px;
+  }
+
+  .preference-header h4 {
+    font-size: 13px;
+  }
+
+  .channel-label,
+  .frequency-label {
+    font-size: 13px;
+    min-width: 60px;
+  }
+
+  .quiet-settings,
+  .advanced-settings {
+    padding: 8px;
+  }
+
+  :deep(.el-form-item__label) {
+    width: 80px !important;
+    font-size: 13px;
+  }
+
+  :deep(.el-tabs__item) {
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  :deep(.el-input-number) {
+    width: 100px;
+  }
+
+  :deep(.el-select) {
+    width: 100% !important;
+  }
 }
 </style>

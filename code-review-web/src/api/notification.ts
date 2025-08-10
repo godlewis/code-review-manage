@@ -80,8 +80,8 @@ export interface PageResult<T> {
 // 通知API
 export const notificationApi = {
   // 发送通知
-  sendNotification(request: NotificationRequest) {
-    return request.post('/notifications/send', request)
+  sendNotification(notificationRequest: NotificationRequest) {
+    return request.post('/notifications/send', notificationRequest)
   },
 
   // 获取用户通知列表
