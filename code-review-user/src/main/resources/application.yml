@@ -1,20 +1,14 @@
-server:
-  port: 8080
-
 spring:
   application:
-    name: code-review-user-service
-  
+    name: code-review-user
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/code_review?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: password
-    
   redis:
     host: localhost
     port: 6379
-    password: 
     database: 0
     timeout: 2000ms
     lettuce:
@@ -22,15 +16,8 @@ spring:
         max-active: 8
         max-idle: 8
         min-idle: 0
-        max-wait: -1ms
-        
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    virtual-host: /
 
+# MyBatis Plus配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -40,23 +27,74 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
-      id-type: auto
-    banner: false
+  mapper-locations: classpath*:mapper/*.xml
 
+# JWT配置
+jwt:
+  secret: code-review-system-secret-key-2024
+  expiration: 86400000 # 24小时
+
+# 评审分配配置
+review:
+  assignment:
+    avoidance-weeks: 4 # 避重周期
+    max-assignments-per-week: 3 # 每周最大任务数
+    skill-match-weight: 0.4 # 技能匹配权重
+    load-balance-weight: 0.3 # 负载均衡权重
+    diversity-weight: 0.3 # 多样性权重
+    enable-auto-assignment: true # 是否启用自动分配
+    enable-new-user-priority: true # 是否启用新人优先分配经验丰富的评审者
+    new-user-threshold-months: 3 # 新用户定义阈值（月）
+    experienced-user-threshold-months: 6 # 经验用户定义阈值（月）
+    
+    # 团队特殊配置示例
+    team-special-configs:
+      1:
+        team-id: 1
+        team-name: "核心开发团队"
+        enabled: true
+        avoidance-weeks: 6
+        max-assignments-per-week: 2
+        skill-match-weight: 0.5
+        load-balance-weight: 0.3
+        diversity-weight: 0.2
+        remarks: "核心团队需要更严格的避重策略"
+    
+    # 用户特殊配置示例
+    user-special-configs:
+      1:
+        user-id: 1
+        username: "senior-dev"
+        enabled: true
+        max-assignments-per-week: 5
+        reviewer-only: false
+        reviewee-only: false
+        pause-assignment: false
+        remarks: "高级开发者，可以承担更多评审任务"
+    
+    # 排除配对示例
+    exclude-pairs:
+      - user-id1: 1
+        user-id2: 2
+        reason: "同一项目组，避免利益冲突"
+        enabled: true
+        start-date: "2024-01-01"
+        end-date: "2024-12-31"
+    
+    # 强制配对示例
+    force-pairs:
+      - reviewer-id: 3
+        reviewee-id: 4
+        reason: "新人培养计划"
+        priority: 5
+        enabled: true
+        start-date: "2024-01-01"
+        end-date: "2024-06-30"
+
+# 日志配置
 logging:
   level:
     com.company.codereview: DEBUG
     org.springframework.security: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
-# JWT配置
-jwt:
-  secret: codeReviewSystemSecretKey2023
-  expiration: 86400000 # 24小时
-
-# 文件上传配置
-file:
-  upload:
-    max-size: 10485760 # 10MB
-    allowed-types: jpg,jpeg,png,gif,pdf,doc,docx

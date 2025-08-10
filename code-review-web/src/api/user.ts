@@ -3,12 +3,12 @@ import type { LoginRequest, LoginResponse, User, Team } from '@/types/user'
 
 // 用户登录
 export const login = (data: LoginRequest) => {
-  return request.post<LoginResponse>('/users/login', data)
+  return request.post<LoginResponse>('/auth/login', data)
 }
 
 // 用户登出
 export const logout = () => {
-  return request.post('/users/logout')
+  return request.post('/auth/logout')
 }
 
 // 获取用户信息

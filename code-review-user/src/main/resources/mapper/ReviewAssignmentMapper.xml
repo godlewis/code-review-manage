@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.company.codereview.user.repository.ReviewAssignmentRepository">
+
+    <!-- 批量插入分配记录 -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO review_assignments (
+            team_id, reviewer_id, reviewee_id, week_start_date, status,
+            skill_match_score, load_balance_score, diversity_score, total_score,
+            is_manual_adjusted, remarks, created_at, updated_at, deleted
+        ) VALUES
+        <foreach collection="assignments" item="assignment" separator=",">
+            (
+                #{assignment.teamId},
+                #{assignment.reviewerId},
+                #{assignment.revieweeId},
+                #{assignment.weekStartDate},
+                #{assignment.status},
+                #{assignment.skillMatchScore},
+                #{assignment.loadBalanceScore},
+                #{assignment.diversityScore},
+                #{assignment.totalScore},
+                #{assignment.isManualAdjusted},
+                #{assignment.remarks},
+                NOW(),
+                NOW(),
+                0
+            )
+        </foreach>
+    </insert>
+
+</mapper>
