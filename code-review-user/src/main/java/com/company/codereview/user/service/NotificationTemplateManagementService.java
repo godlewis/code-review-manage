@@ -273,10 +273,10 @@ public class NotificationTemplateManagementService {
             NotificationTemplate.NotificationChannel.EMAIL,
             "评审任务分配邮件通知",
             "代码评审任务分配 - ${reviewTitle}",
-            "您好，${userName}！\n\n您被分配了一个新的代码评审任务：\n\n" +
-            "任务标题：${reviewTitle}\n" +
-            "提交人：${submitter}\n" +
-            "截止时间：${deadline}\n\n" +
+            "您好，${userName}！\\n\\n您被分配了一个新的代码评审任务：\\n\\n" +
+            "任务标题：${reviewTitle}\\n" +
+            "提交人：${submitter}\\n" +
+            "截止时间：${deadline}\\n\\n" +
             "请登录系统查看详情并及时完成评审。"
         );
         
@@ -295,7 +295,7 @@ public class NotificationTemplateManagementService {
             NotificationTemplate.NotificationChannel.IN_APP,
             "整改提交通知",
             "问题整改已提交",
-            "问题"${issueTitle}"的整改已提交，请查看并验证。"
+            "问题\"${issueTitle}\"的整改已提交，请查看并验证。"
         );
         
         // 系统公告模板

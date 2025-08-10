@@ -1,6 +1,8 @@
 package com.company.codereview.user.service.ai;
 
 import com.company.codereview.user.config.AIServiceConfig;
+import com.company.codereview.user.dto.AIRequest;
+import com.company.codereview.user.dto.AIResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -10,6 +12,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -28,7 +31,79 @@ public class OpenAIClient implements AIClient {
     private final ObjectMapper objectMapper;
     
     @Override
-    public CompletableFuture<AIResponse> chatCompletion(AIRequest request) {
+    public CompletableFuture<String> generateSummary(String prompt) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                AIRequest request = new AIRequest();
+                request.setPrompt(prompt);
+                request.setModel(config.getDefaultModel());
+                request.setMaxTokens(1000);
+                
+                AIResponse response = chatCompletion(request).get();
+                return response.isSuccess() ? response.getContent() : "生成汇总失败";
+            } catch (Exception e) {
+                log.error("生成汇总失败", e);
+                return "生成汇总失败: " + e.getMessage();
+            }
+        });
+    }
+    
+    @Override
+    public CompletableFuture<String> analyzeIssuePatterns(String issuesData) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String prompt = "分析以下问题数据，识别问题模式：\n" + issuesData;
+                AIRequest request = new AIRequest();
+                request.setPrompt(prompt);
+                request.setModel(config.getDefaultModel());
+                request.setMaxTokens(800);
+                
+                AIResponse response = chatCompletion(request).get();
+                return response.isSuccess() ? response.getContent() : "分析问题模式失败";
+            } catch (Exception e) {
+                log.error("分析问题模式失败", e);
+                return "分析问题模式失败: " + e.getMessage();
+            }
+        });
+    }
+    
+    @Override
+    public CompletableFuture<String> generateImprovementSuggestions(String analysisData) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String prompt = "基于以下分析数据，生成改进建议：\n" + analysisData;
+                AIRequest request = new AIRequest();
+                request.setPrompt(prompt);
+                request.setModel(config.getDefaultModel());
+                request.setMaxTokens(600);
+                
+                AIResponse response = chatCompletion(request).get();
+                return response.isSuccess() ? response.getContent() : "生成改进建议失败";
+            } catch (Exception e) {
+                log.error("生成改进建议失败", e);
+                return "生成改进建议失败: " + e.getMessage();
+            }
+        });
+    }
+    
+    @Override
+    public boolean isAvailable() {
+        try {
+            // 发送简单的健康检查请求
+            AIRequest testRequest = new AIRequest();
+            testRequest.setPrompt("Hello");
+            testRequest.setModel(config.getDefaultModel());
+            testRequest.setMaxTokens(10);
+            
+            AIResponse response = chatCompletion(testRequest).get();
+            return response.isSuccess();
+        } catch (Exception e) {
+            log.warn("AI服务健康检查失败", e);
+            return false;
+        }
+    }
+    
+    private CompletableFuture<AIResponse> chatCompletion(AIRequest request) {
         return CompletableFuture.supplyAsync(() -> {
             long startTime = System.currentTimeMillis();
             
@@ -77,32 +152,7 @@ public class OpenAIClient implements AIClient {
         });
     }
     
-    @Override
-    public boolean isHealthy() {
-        try {
-            // 发送简单的健康检查请求
-            AIRequest testRequest = new AIRequest();
-            testRequest.setModel(config.getDefaultModel());
-            testRequest.setMessages(Arrays.asList(Message.user("Hello")));
-            testRequest.setMaxTokens(10);
-            
-            AIResponse response = chatCompletion(testRequest).get();
-            return response.isSuccess();
-        } catch (Exception e) {
-            log.warn("AI服务健康检查失败", e);
-            return false;
-        }
-    }
-    
-    @Override
-    public List<String> getSupportedModels() {
-        return Arrays.asList(
-            "gpt-3.5-turbo",
-            "gpt-3.5-turbo-16k",
-            "gpt-4",
-            "gpt-4-32k"
-        );
-    }
+
     
     private OpenAIRequest buildOpenAIRequest(AIRequest request) {
         OpenAIRequest openAIRequest = new OpenAIRequest();
@@ -111,9 +161,12 @@ public class OpenAIClient implements AIClient {
         openAIRequest.setMaxTokens(request.getMaxTokens());
         
         // 转换消息格式
-        List<OpenAIMessage> messages = request.getMessages().stream()
-                .map(msg -> new OpenAIMessage(msg.getRole(), msg.getContent()))
-                .collect(Collectors.toList());
+        List<OpenAIMessage> messages = new ArrayList<>();
+        if (request.getMessages() != null) {
+            messages = request.getMessages().stream()
+                    .map(msg -> new OpenAIMessage(msg.getRole(), msg.getContent()))
+                    .collect(Collectors.toList());
+        }
         
         // 如果有系统提示词，添加到消息开头
         if (request.getSystemPrompt() != null && !request.getSystemPrompt().trim().isEmpty()) {

@@ -6,6 +6,8 @@ import com.company.codereview.user.repository.AISummaryRepository;
 import com.company.codereview.user.service.ai.AIClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -533,8 +535,8 @@ public class AISummaryService {
     /**
      * Summary Comparison DTO
      */
-    @lombok.Data
-    @lombok.Builder
+    @Data
+    @Builder
     public static class SummaryComparison {
         private AISummaryResponse currentSummary;
         private AISummaryResponse previousSummary;
